@@ -12,10 +12,19 @@ c.fillRect(0, 0, canvas.width, canvas.height)
 
 const gravity = 0.5
 
+const background = new Sprite({
+    position: {
+      x: 0,
+      y: 0
+    },
+    imageSrc: './img/background mapa pravljena.png'
+  })
 
 
-const igrac = new Sprite({
-    pozicija: {
+
+
+const igrac = new Borac({
+    position: {
         x:0,
     y:0
     },
@@ -26,11 +35,57 @@ const igrac = new Sprite({
     offset: {
         x:0,
         y:0
+    },
+    imageSrc: './img/protivnik/Idle.png',
+  framesMax: 8,
+  scale: 2.5,
+  offset: {
+    x: 215,
+    y: 157
+  },
+  sprites: {
+    idle: {
+      imageSrc: './img/protivnik/Idle.png',
+      framesMax: 8
+    },
+    run: {
+      imageSrc: './img/protivnik/Run.png',
+      framesMax: 8
+    },
+    jump: {
+      imageSrc: './img/protivnik/Jump.png',
+      framesMax: 2
+    },
+    fall: {
+      imageSrc: './img/protivnik/Fall.png',
+      framesMax: 2
+    },
+    attack1: {
+      imageSrc: './img/protivnik/Attack1.png',
+      framesMax: 6
+    },
+    takeHit: {
+      imageSrc: './img/protivnik/Take Hit - white silhouette.png',
+      framesMax: 4
+    },
+    death: {
+      imageSrc: './img/protivnik/Death.png',
+      framesMax: 6
     }
+  },
+  rangeNapad: {
+    offset: {
+      x: 100,
+      y: 50
+    },
+    width: 160,
+    height: 50
+  }
+
     })
 
-const protivnik = new Sprite({
-    pozicija: {
+const protivnik = new Borac({
+    position: {
     x:400,
 y:100
 },
@@ -38,11 +93,56 @@ brzina: {
     x:0,
     y:0
 },
-boja: 'blue',
+color: 'blue',
 offset: {
     x: -50,
     y:0
-}
+},
+imageSrc: './img/igrac/Idle.png',
+  framesMax: 4,
+  scale: 2.5,
+  offset: {
+    x: 215,
+    y: 167
+  },
+  sprites: {
+    idle: {
+      imageSrc: './img/igrac/Idle.png',
+      framesMax: 4
+    },
+    run: {
+      imageSrc: './img/igrac/Run.png',
+      framesMax: 8
+    },
+    jump: {
+      imageSrc: './img/igrac/Jump.png',
+      framesMax: 2
+    },
+    fall: {
+      imageSrc: './img/igrac/Fall.png',
+      framesMax: 2
+    },
+    attack1: {
+      imageSrc: './img/igrac/Attack1.png',
+      framesMax: 4
+    },
+    takeHit: {
+      imageSrc: './img/igrac/Take hit.png',
+      framesMax: 3
+    },
+    death: {
+      imageSrc: './img/igrac/Death.png',
+      framesMax: 7
+    }
+  },
+  rangeNapad: {
+    offset: {
+      x: -170,
+      y: 50
+    },
+    width: 170,
+    height: 50
+  }
 })
 
 console.log(igrac)
@@ -62,48 +162,17 @@ const keys = {
       }
   }
 
-  function sudarKocki({ kocka1, kocka2}) {
-      return(
-        kocka1.rangeNapad.pozicija.x + kocka1.rangeNapad.width >= kocka2.pozicija.x &&
-        kocka1.rangeNapad.pozicija.x <= kocka2.pozicija.x + kocka2.width &&
-        kocka1.rangeNapad.pozicija.y + kocka1.rangeNapad.height >= kocka2.pozicija.y 
-        && kocka1.rangeNapad.pozicija.y <= kocka2.pozicija.y + kocka2.height
-      )
-  }
+  smanjiTimer()
 
-function pobednikPartije({igrac, protivnik, timerId}) {
-    clearTimeout(timerId)
-    document.querySelector('#tekstSredina').style.display = 'flex'
-    if (igrac.zivot === protivnik.zivot) {
-        document.querySelector('#tekstSredina').innerHTML = 'Nereseno'
-    } else if (igrac.zivot > protivnik.zivot) {
-        document.querySelector('#tekstSredina').innerHTML = 'Igrac je pobedio'
-    } else if (protivnik.zivot > igrac.zivot) {
-        document.querySelector('#tekstSredina').innerHTML = 'Protivnik je pobedio'
-    }
-}
 
-let timer = 10
-function smanjiTimer() {
-
-if (timer > 0) {
-   timerId=setTimeout(smanjiTimer, 1000)
-    timer--
-    document.querySelector('#vreme').innerHTML = timer
-}
-if (timer === 0) {
-   
-  pobednikPartije({igrac, protivnik, timerId})
-
-}
-}
-
-smanjiTimer()
 
 function animate() {
     window.requestAnimationFrame(animate)
     c.fillStyle = `black`
     c.fillRect(0, 0, canvas.width, canvas.height)
+    background.update()
+    c.fillStyle = 'rgba(255, 255, 255, 0.15)'
+  c.fillRect(0, 0, canvas.width, canvas.height)
     igrac.update()
     protivnik.update()
 
@@ -113,36 +182,84 @@ function animate() {
  // Kretanje igraca
     if (keys.a.pressed && igrac.lastKey === 'a') {
         igrac.brzina.x = -5
+        igrac.switchSprite('run')
      } else if (keys.d.pressed && igrac.lastKey === 'd') {
                 igrac.brzina.x = 5
+                igrac.switchSprite('run')
             }
+            else{
+                igrac.switchSprite('idle')
+            }
+ // Skakanje igrac
+
+ if (igrac.brzina.y < 0) {
+    igrac.switchSprite('jump')
+  } else if (igrac.brzina.y > 0) {
+    igrac.switchSprite('fall')
+  }
+
 //Kretanje protivnika
     if (keys.ArrowLeft.pressed && protivnik.lastKey === 'ArrowLeft') {
          protivnik.brzina.x = -5
+         protivnik.switchSprite('run')
      } else if (keys.ArrowRight.pressed && protivnik.lastKey === 'ArrowRight') {
          protivnik.brzina.x = 5
+         protivnik.switchSprite('run')
+      }else {
+        protivnik.switchSprite('idle')
       }
-// Sudar
+// Skakanje protivnik
+
+if (protivnik.brzina.y < 0) {
+    protivnik.switchSprite('jump')
+  } else if (protivnik.brzina.y > 0) {
+    protivnik.switchSprite('fall')
+  }
+
+// Sudar i udarac
 if (sudarKocki({
     kocka1: igrac,
     kocka2: protivnik
   }) &&
-  igrac.napada
+  igrac.napada &&
+  igrac.framesCurrent === 4
     ){
+        protivnik.takeHit()
         igrac.napada = false
-protivnik.zivot -=20
-document.querySelector('#healthProtivnik2').style.width = protivnik.zivot + '%'
+
+        gsap.to('#healthProtivnik2', {
+            width: protivnik.zivot + '%'
+        })
 }
+
+// Igrac promasi udarac
+
+if (igrac.napada && igrac.framesCurrent === 4) {
+    igrac.napada = false
+  }
+
+  // Igrac prima udarac
+
 if (sudarKocki({
     kocka1: protivnik,
     kocka2: igrac
   }) &&
-  protivnik.napada
+  protivnik.napada &&
+  protivnik.framesCurrent === 2
     ){
+        igrac.takeHit()
         protivnik.napada = false
-        igrac.zivot -=20
-        document.querySelector('#healthIgrac2').style.width = igrac.zivot + '%'
+
+        gsap.to('#healthIgrac2', {
+            width: igrac.zivot + '%'
+        })
 }
+
+// Protivnik promasi udarac
+
+if (protivnik.napada && protivnik.framesCurrent === 2) {
+    protivnik.napada = false
+  }
 
 //kraj igre zavisno od zivota
 if(protivnik.zivot <= 0 || igrac.zivot <= 0) {
@@ -154,7 +271,7 @@ pobednikPartije({igrac, protivnik, timerId})
 animate()
 
 window.addEventListener('keydown', (event) => {
-    console.log(event.key)
+   if(!igrac.dead) {
     switch (event.key) {
         case 'd':
         keys.d.pressed = true
@@ -168,24 +285,30 @@ window.addEventListener('keydown', (event) => {
             igrac.brzina.y = -20
             break
             case ' ':
-            igrac.napada()
+            igrac.napad()
             break
-            case 'ArrowRight':
-                keys.ArrowRight.pressed = true
-                protivnik.lastKey = 'ArrowRight'
-                break
-                case 'ArrowLeft':
-                keys.ArrowLeft.pressed = true
-                protivnik.lastKey = 'ArrowLeft'
-                break
-                 case 'ArrowUp':
-                    protivnik.brzina.y = -20
-                    break
-                    case 'ArrowDown':
-                        protivnik.napada = true
-                        break
+
     }
-    console.log(event.key)
+}
+
+ if (!protivnik.dead){
+ switch (event.key) {
+case 'ArrowRight':
+ keys.ArrowRight.pressed = true
+ protivnik.lastKey = 'ArrowRight'
+ break
+case 'ArrowLeft':
+keys.ArrowLeft.pressed = true
+protivnik.lastKey = 'ArrowLeft'
+break
+case 'ArrowUp':
+ protivnik.brzina.y = -20
+break
+case 'ArrowDown':
+protivnik.napad()
+   break
+    }
+}
 })
 
 window.addEventListener('keyup', (event) => {
@@ -195,8 +318,7 @@ window.addEventListener('keyup', (event) => {
         break
         case 'a':
         keys.a.pressed = false
-        break
-       
+        break 
     }
     // Protivnik komande
     switch(event.key) {
@@ -207,6 +329,4 @@ window.addEventListener('keyup', (event) => {
         keys.ArrowLeft.pressed = false
         break
     }
-
-    console.log(event.key)
 })
