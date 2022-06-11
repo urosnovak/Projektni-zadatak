@@ -12,61 +12,7 @@ c.fillRect(0, 0, canvas.width, canvas.height)
 
 const gravity = 0.5
 
-class Sprite {
-    constructor({pozicija, brzina, boja = 'red', offset}){
-        this.pozicija = pozicija
-        this.brzina = brzina
-        this.width = 50
-        this.height = 150
-        this.lastKey
-        this.rangeNapad = {
-            pozicija: {
-                x: this.pozicija.x,
-                y: this.pozicija.y
-            },
-            offset,
-            width: 100,
-            height: 50
-        }
-        this.boja = boja
-        this.napada
-    }
-    draw() {
-        c.fillStyle = this.boja
-        c.fillRect(this.pozicija.x, this.pozicija.y, this.width, this.height)
 
-        // Range napada
-        if(this.napada) {
-        c.fillStyle = 'green'
-        c.fillRect(
-            this.rangeNapad.pozicija.x,
-            this.rangeNapad.pozicija.y,
-            this.rangeNapad.width,
-            this.rangeNapad.height
-            )
-    }
-    }
-
-
-    update(){
-        this.draw()
-        this.rangeNapad.pozicija.x = this.pozicija - this.rangeNapad.offset.x
-        this.rangeNapad.pozicija.y = this.pozicija
-
-        this.pozicija.x += this.brzina.x
-        this.pozicija.y += this.brzina.y
-
-        if (this.pozicija.y + this.height + this.brzina.y >= canvas.height) {
-            this.brzina.y = 0
-        } else this.brzina.y += gravity
-    }
-    napada() {
-        this.napada = true
-        setTimeout(() => {
-           this.napada = false 
-        }, 100);
-    }
-}
 
 const igrac = new Sprite({
     pozicija: {
@@ -125,6 +71,34 @@ const keys = {
       )
   }
 
+function pobednikPartije({igrac, protivnik, timerId}) {
+    clearTimeout(timerId)
+    document.querySelector('#tekstSredina').style.display = 'flex'
+    if (igrac.zivot === protivnik.zivot) {
+        document.querySelector('#tekstSredina').innerHTML = 'Nereseno'
+    } else if (igrac.zivot > protivnik.zivot) {
+        document.querySelector('#tekstSredina').innerHTML = 'Igrac je pobedio'
+    } else if (protivnik.zivot > igrac.zivot) {
+        document.querySelector('#tekstSredina').innerHTML = 'Protivnik je pobedio'
+    }
+}
+
+let timer = 10
+function smanjiTimer() {
+
+if (timer > 0) {
+   timerId=setTimeout(smanjiTimer, 1000)
+    timer--
+    document.querySelector('#vreme').innerHTML = timer
+}
+if (timer === 0) {
+   
+  pobednikPartije({igrac, protivnik, timerId})
+
+}
+}
+
+smanjiTimer()
 
 function animate() {
     window.requestAnimationFrame(animate)
@@ -156,7 +130,8 @@ if (sudarKocki({
   igrac.napada
     ){
         igrac.napada = false
-console.log(`go`)
+protivnik.zivot -=20
+document.querySelector('#healthProtivnik2').style.width = protivnik.zivot + '%'
 }
 if (sudarKocki({
     kocka1: protivnik,
@@ -164,10 +139,15 @@ if (sudarKocki({
   }) &&
   protivnik.napada
     ){
-        igrac.napada = false
-console.log(`napad prosao`)
+        protivnik.napada = false
+        igrac.zivot -=20
+        document.querySelector('#healthIgrac2').style.width = igrac.zivot + '%'
 }
 
+//kraj igre zavisno od zivota
+if(protivnik.zivot <= 0 || igrac.zivot <= 0) {
+pobednikPartije({igrac, protivnik, timerId})
+}
 
         }
 
